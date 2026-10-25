@@ -1,0 +1,11 @@
+{
+  "name": "BassLine",
+  "short_name": "BassLine",
+  "description": "Read a music sheet, get an easy bass tab, and play along.",
+  "start_url": "./",
+  "display": "standalone",
+  "orientation": "any",
+  "background_color": "#16171a",
+  "theme_color": "#16171a",
+  "icons": [{ "src": "icon.svg", "sizes": "any", "type": "image/svg+xml" }]
+}

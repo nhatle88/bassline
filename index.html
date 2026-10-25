@@ -1,0 +1,210 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+  <meta name="apple-mobile-web-app-title" content="BassLine">
+  <meta name="theme-color" content="#16171a">
+  <title>BassLine</title>
+  <link rel="icon" href="icon.svg" type="image/svg+xml">
+  <link rel="apple-touch-icon" href="icon.svg">
+  <link rel="manifest" href="manifest.webmanifest">
+  <link rel="stylesheet" href="css/app.css">
+</head>
+<body>
+  <header class="topbar">
+    <div class="brand">
+      <span class="logo" data-icon="logo"></span>
+      <span id="songTitle" class="song-title">BassLine</span>
+    </div>
+    <div class="top-actions">
+      <label class="btn" title="Open a sheet (PDF or photos)">
+        <span data-icon="file"></span><span class="lbl">Open</span>
+        <input id="fileInput" type="file" accept="application/pdf,image/*" multiple hidden>
+      </label>
+      <button class="btn accent" id="readBtn" title="Let Claude read the chords and bass part"><span data-icon="sparkles"></span><span class="lbl">Read sheet</span></button>
+      <button class="btn" id="chordsBtn" title="Type or fix the chords"><span data-icon="pencil"></span><span class="lbl">Chords</span></button>
+      <button class="btn" id="libraryBtn" title="Saved songs"><span data-icon="songs"></span><span class="lbl">Songs</span></button>
+      <div class="seg" id="viewSeg">
+        <button data-view="sheet">Sheet</button>
+        <button data-view="split">Both</button>
+        <button data-view="tab">Tab</button>
+      </div>
+      <button class="btn icon" id="settingsBtn" aria-label="Settings"><span data-icon="gear"></span></button>
+    </div>
+  </header>
+
+  <main class="stage view-split" id="stage">
+    <section id="sheetPane" class="pane">
+      <div id="sheetScroll" class="sheet-scroll">
+        <div id="pages" class="pages"></div>
+        <div id="sheetEmpty" class="empty">
+          <h2>Open a music sheet</h2>
+          <p>A PDF, or photos of the pages (pick several photos for several pages).</p>
+          <label class="btn big accent">
+            <span data-icon="file"></span> Choose sheet
+            <input id="fileInput2" type="file" accept="application/pdf,image/*" multiple hidden>
+          </label>
+          <p class="muted">No sheet handy? Try a demo:</p>
+          <div id="demoList" class="demo-list"></div>
+        </div>
+      </div>
+      <div class="zoom">
+        <button class="btn icon" id="zoomOut" aria-label="Zoom out">−</button>
+        <button class="btn icon" id="zoomIn" aria-label="Zoom in">+</button>
+      </div>
+    </section>
+
+    <div class="divider" id="divider" aria-hidden="true"><span></span></div>
+
+    <section id="tabPane" class="pane">
+      <div class="tab-tools">
+        <select id="styleSelect" aria-label="Bass style"></select>
+        <div class="seg" id="levelSeg"></div>
+        <button class="btn" id="ideaBtn" title="Make a new variation"><span data-icon="dice"></span><span class="lbl">New idea</span></button>
+        <button class="btn icon" id="printBtn" aria-label="Print tab"><span data-icon="printer"></span></button>
+      </div>
+      <p class="style-hint" id="styleHint"></p>
+      <div id="tabScroll" class="tab-scroll">
+        <h1 class="print-title" id="printTitle"></h1>
+        <div id="tabEmpty" class="empty small">
+          <h3>Your bass tab shows up here</h3>
+          <p>Open a sheet and tap <b>Read sheet</b>, or tap <b>Chords</b> to type them in (like <code>| G | D/F# | Em | C |</code>).</p>
+        </div>
+        <div id="tab" class="tab"></div>
+        <p class="song-notes" id="songNotes" hidden></p>
+      </div>
+    </section>
+    <div class="countin" id="countIn" hidden></div>
+  </main>
+
+  <footer class="transport">
+    <button class="btn icon" id="rewindBtn" aria-label="Back to start"><span data-icon="rewind"></span></button>
+    <button class="play" id="playBtn" aria-label="Play"><span data-icon="play"></span></button>
+    <span class="pos" id="posLabel"></span>
+    <div class="tempo">
+      <button class="btn icon" id="slowerBtn" aria-label="Slower">−</button>
+      <button class="tempo-val" id="tempoVal"><b id="bpmNum">90</b><small>BPM</small></button>
+      <button class="btn icon" id="fasterBtn" aria-label="Faster">+</button>
+    </div>
+    <div class="scroll-ctl">
+      <div class="seg" id="scrollSeg">
+        <button data-mode="follow">Follow</button>
+        <button data-mode="steady">Steady</button>
+      </div>
+      <input type="range" id="speed" min="1" max="100" aria-label="Scroll speed">
+    </div>
+    <button class="btn" id="loopBtn"><span data-icon="loop"></span><span class="lbl">Loop</span></button>
+    <button class="btn" id="mixBtn"><span data-icon="sliders"></span><span class="lbl">Sound</span></button>
+
+    <div class="popover" id="tempoPop" hidden>
+      <h4>Tempo</h4>
+      <input type="range" id="tempoRange" min="30" max="240" step="1">
+      <div class="row"><span id="tempoPct" class="muted"></span><button class="btn" id="tempoReset">Song tempo</button></div>
+    </div>
+    <div class="popover" id="loopPop" hidden>
+      <h4>Loop a section</h4>
+      <div class="row">
+        <label>From bar <select id="loopFrom"></select></label>
+        <label>to <select id="loopTo"></select></label>
+      </div>
+      <button class="btn wide" id="loopToggle">Loop on</button>
+      <p class="muted small">Tip: tap a bar in the tab to start playing from there.</p>
+    </div>
+    <div class="popover" id="mixPop" hidden>
+      <h4>Sound</h4>
+      <label class="switch"><input type="checkbox" data-mix="bass"> Bass line</label>
+      <label class="switch"><input type="checkbox" data-mix="click"> Metronome click</label>
+      <label class="switch"><input type="checkbox" data-mix="chords"> Chord pad</label>
+      <label class="switch"><input type="checkbox" data-mix="swing"> Swing 8ths</label>
+      <label class="switch"><input type="checkbox" id="countInBox"> Count-in bar</label>
+    </div>
+  </footer>
+
+  <div class="note-editor" id="noteEditor" hidden>
+    <div class="ne-head">
+      <div>
+        <div class="ne-title" id="neTitle"></div>
+        <div class="ne-sub" id="neSub"></div>
+        <div class="ne-sub muted" id="neTones"></div>
+      </div>
+      <button class="btn" id="neClose">Done</button>
+    </div>
+    <div class="ne-buttons">
+      <button class="btn" data-act="down">♭ Lower</button>
+      <button class="btn" data-act="up">♯ Higher</button>
+      <button class="btn" data-act="oct-down">Octave ↓</button>
+      <button class="btn" data-act="oct-up">Octave ↑</button>
+      <button class="btn" data-act="string">⇅ Other string</button>
+      <button class="btn" data-act="rest" id="neRest">Make rest</button>
+      <button class="btn" data-act="hear">🔊 Hear</button>
+      <button class="btn accent" data-act="idea">🎲 New idea for this bar</button>
+    </div>
+  </div>
+
+  <dialog id="chordDialog" class="dialog">
+    <form method="dialog" class="dialog-body" id="chordForm">
+      <h2>Chords</h2>
+      <div class="grid">
+        <label class="span2">Title <input id="cTitle" type="text"></label>
+        <label>Tempo (BPM) <input id="cBpm" type="number" min="30" max="260"></label>
+        <label>Beats per bar
+          <select id="cBeats"><option>2</option><option>3</option><option selected>4</option><option>5</option><option>6</option><option>7</option><option>12</option></select>
+        </label>
+        <label>Key <input id="cKey" type="text" placeholder="e.g. G"></label>
+      </div>
+      <label>Chord chart
+        <textarea id="cChart" rows="10" spellcheck="false" autocapitalize="off" autocomplete="off"
+          placeholder="[Verse]&#10;| G | D/F# | Em | C |&#10;| G | D | C . . D | G |"></textarea>
+      </label>
+      <p class="muted small">One bar between each <code>|</code>. Two chords in a bar split it evenly; <code>.</code> adds a beat (<code>C . . D</code> = 3 beats C, 1 beat D). <code>%</code> repeats the last bar, <code>N.C.</code> = no chord, <code>[Chorus]</code> marks a section. Bars you don't change keep your edits.</p>
+      <ul class="errors" id="cErrors"></ul>
+      <div class="dialog-actions">
+        <button class="btn" value="cancel" formnovalidate>Cancel</button>
+        <button class="btn accent" id="cApply" value="apply">Apply</button>
+      </div>
+    </form>
+  </dialog>
+
+  <dialog id="settingsDialog" class="dialog">
+    <form method="dialog" class="dialog-body">
+      <h2>Settings</h2>
+      <p class="muted" id="settingsMsg"></p>
+      <label>Claude API key
+        <input id="apiKey" type="password" autocomplete="off" placeholder="sk-ant-…">
+      </label>
+      <p class="muted small">Reading a sheet uses your own key from console.anthropic.com. The key is kept only in this browser on this device. One sheet usually costs well under $1.</p>
+      <label class="switch"><input type="checkbox" id="nightSheet"> Dark sheet (invert pages)</label>
+      <div class="dialog-actions">
+        <button class="btn" value="cancel">Close</button>
+        <button class="btn accent" value="save">Save</button>
+      </div>
+    </form>
+  </dialog>
+
+  <dialog id="libraryDialog" class="dialog">
+    <form method="dialog" class="dialog-body">
+      <h2>Saved songs</h2>
+      <p class="muted small">Songs save automatically on this iPad, with the sheet, chords and your bass edits.</p>
+      <ul class="library" id="libraryList"></ul>
+      <div class="dialog-actions"><button class="btn" value="close">Close</button></div>
+    </form>
+  </dialog>
+
+  <dialog id="progressDialog" class="dialog small">
+    <div class="dialog-body center">
+      <div class="spinner"></div>
+      <p id="progressText">Working…</p>
+      <p class="muted small" id="progressTime"></p>
+      <button class="btn" id="progressCancel" hidden>Cancel</button>
+    </div>
+  </dialog>
+
+  <div class="toast" id="toast" hidden></div>
+
+  <script type="module" src="js/main.js"></script>
+</body>
+</html>
